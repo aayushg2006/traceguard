@@ -101,3 +101,21 @@ pytest
 ```
 
 Tests marked `integration` use the configured local Ollama service and models. The business tools are synthetic and never connect to real customer accounts, payment systems, databases, or external business APIs.
+
+## Phase 2 security tests
+
+The foundational security-test engine now exercises the target application through its HTTP API. It includes prompt injection, RAG/indirect prompt injection, synthetic data leakage, and tool-abuse categories. Results use a shared typed schema with deterministic scores and explicit `SECURITY_FAIL`, `INFRA_ERROR`, `CONFIG_ERROR`, and `MODEL_ERROR` statuses.
+
+With Ollama and the application running:
+
+```bash
+python scripts/run_security_tests.py
+```
+
+The command writes a machine-readable report to `reports/security-report.json`. Category filtering is available:
+
+```bash
+python scripts/run_security_tests.py --category prompt_injection
+```
+
+See [docs/security-tests.md](docs/security-tests.md) for the result schema, architecture, scoring, and limitations. Baselines, change-aware selection, regression comparison, mutation testing, policy gates, and CI/CD integration are not implemented yet.

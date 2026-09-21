@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 .env
 data/chroma/
+reports/security-report.json
