@@ -1,13 +1,15 @@
 # TraceGuard
 
-TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 0 — Repository & Development Setup**.
+TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 1 — Target AI Application MVP**.
 
-Phase 0 provides only a minimal FastAPI application and a health endpoint. AI application functionality and security testing are planned for later phases and are not included yet.
+This phase provides a local, synthetic Enterprise Customer Support AI Agent. It combines a configurable Ollama chat model, a local ChromaDB knowledge base with Ollama embeddings, and explicitly allowlisted mock business tools. TraceGuard’s security-testing framework is intentionally not implemented yet.
 
 ## Prerequisites
 
-- Python 3.12 or a compatible Python 3.10+ installation
+- Python 3.12 (the validated development version)
 - Git
+- Ollama 0.32.9 or compatible, running at `http://127.0.0.1:11434`
+- Models `qwen2.5-coder:3b` and `nomic-embed-text`
 
 Verify the tools on Linux/macOS:
 
@@ -15,21 +17,21 @@ Verify the tools on Linux/macOS:
 python3 --version
 python3 -m pip --version
 git --version
-python3 -m venv --help
+ollama --version
+ollama list
 ```
 
-On Windows PowerShell, use:
+Start Ollama if needed, then install the configured local models:
 
-```powershell
-py --version
-py -m pip --version
-git --version
-py -m venv --help
+```bash
+ollama serve
+ollama pull qwen2.5-coder:3b
+ollama pull nomic-embed-text
 ```
 
-## Setup
+The validated setup uses Ubuntu 24.04, but the Python application is platform-independent where Ollama and ChromaDB support the platform.
 
-Linux/macOS:
+## Python setup
 
 ```bash
 python3 -m venv .venv
@@ -38,29 +40,42 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Windows PowerShell:
+The project uses a local `.venv`; dependencies are not installed globally.
 
-```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+## Configuration
+
+Model settings are in `config/model.yaml`:
+
+```yaml
+model:
+  provider: ollama
+  base_url: http://127.0.0.1:11434
+  chat_model: qwen2.5-coder:3b
+  embedding_model: nomic-embed-text
 ```
 
-The project uses a local `.venv` so dependencies are not installed globally.
+Application and RAG settings are in `config/app.yaml`. No secrets are stored in YAML.
+
+## Index the knowledge base
+
+The knowledge base contains synthetic refund, shipping, support, product, and internal employee documents. The employee document is indexed but excluded from normal public retrieval.
+
+```bash
+python -m scripts.index_knowledge
+```
+
+This creates the local ignored ChromaDB data under `data/chroma/`.
 
 ## Run the application
-
-With the virtual environment activated:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The application exposes:
+Health check:
 
-```text
-GET http://127.0.0.1:8000/health
+```bash
+curl http://127.0.0.1:8000/health
 ```
 
 Expected response:
@@ -69,10 +84,20 @@ Expected response:
 {"status":"ok"}
 ```
 
-## Run tests
+Chat request:
 
-With the virtual environment activated:
+```bash
+curl -X POST http://127.0.0.1:8000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"What is the refund policy?"}'
+```
+
+The response includes the model name, retrieved document sources, selected mock tool, and tool result metadata. It does not expose the system prompt.
+
+## Run tests
 
 ```bash
 pytest
 ```
+
+Tests marked `integration` use the configured local Ollama service and models. The business tools are synthetic and never connect to real customer accounts, payment systems, databases, or external business APIs.

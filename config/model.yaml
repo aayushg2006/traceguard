@@ -1,0 +1,7 @@
+model:
+  provider: ollama
+  base_url: http://127.0.0.1:11434
+  chat_model: qwen2.5-coder:3b
+  embedding_model: nomic-embed-text
+  temperature: 0.1
+  timeout_seconds: 120
