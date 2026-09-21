@@ -103,6 +103,7 @@ def test_targeted_and_none_impact_are_respected():
     assert targeted.decision == Decision.ALLOW
     none = evaluate_policy(security_report("PASS"), impact_report={"selection": {"mode": "NONE", "tests": []}})
     assert none.decision == Decision.ALLOW
+    assert evaluate_policy(None, impact_report={"selection": {"mode": "NONE", "tests": []}}).decision == Decision.ALLOW
 
 
 def test_deterministic_serialization_and_cli_exit_code(tmp_path):

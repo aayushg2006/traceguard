@@ -1,4 +1,5 @@
 .venv/
+.jenkins-venv/
 __pycache__/
 **/__pycache__/
 .pytest_cache/
@@ -13,3 +14,6 @@ reports/mutation-report.json
 reports/failures/
 reports/replay-report.json
 reports/policy-result.json
+reports/pytest.xml
+.traceguard-app.pid
+.traceguard-uvicorn.log

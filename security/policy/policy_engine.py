@@ -35,21 +35,21 @@ def _validate_security(report: dict[str, Any]) -> list[dict[str, Any]]:
     return results
 
 
-def _active_categories(impact: dict[str, Any] | None, rules: PolicyConfig) -> tuple[set[str] | None, RuleEvaluation | None]:
+def _active_categories(impact: dict[str, Any] | None, rules: PolicyConfig) -> tuple[set[str] | None, RuleEvaluation | None, str | None]:
     if impact is None:
         if rules.rules.change_impact.require_report:
-            return None, _rule("CHANGE-IMPACT-REQUIRED", RuleStatus.ERROR, "Change-impact report is required by policy.", decision=Decision.ERROR)
-        return None, _rule("CHANGE-IMPACT", RuleStatus.SKIPPED, "No change-impact report supplied; all supplied security results are evaluated.")
+            return None, _rule("CHANGE-IMPACT-REQUIRED", RuleStatus.ERROR, "Change-impact report is required by policy.", decision=Decision.ERROR), None
+        return None, _rule("CHANGE-IMPACT", RuleStatus.SKIPPED, "No change-impact report supplied; all supplied security results are evaluated."), None
     selection = impact.get("selection")
     if not isinstance(selection, dict) or selection.get("mode") not in IMPACT_MODES:
-        return None, _rule("CHANGE-IMPACT-INVALID", RuleStatus.ERROR, "Change-impact report has no valid selection mode.", decision=Decision.ERROR)
+        return None, _rule("CHANGE-IMPACT-INVALID", RuleStatus.ERROR, "Change-impact report has no valid selection mode.", decision=Decision.ERROR), None
     mode = selection["mode"]
     categories = selection.get("tests", [])
     if not isinstance(categories, list) or not all(isinstance(item, str) for item in categories):
-        return None, _rule("CHANGE-IMPACT-INVALID", RuleStatus.ERROR, "Change-impact selected categories are invalid.", decision=Decision.ERROR)
+        return None, _rule("CHANGE-IMPACT-INVALID", RuleStatus.ERROR, "Change-impact selected categories are invalid.", decision=Decision.ERROR), None
     if mode == "TARGETED":
-        return set(categories), _rule("CHANGE-IMPACT-TARGETED", RuleStatus.EVALUATED, "Only categories selected by Phase 4 are evaluated.", evidence=[{"mode": mode, "categories": sorted(categories)}])
-    return None, _rule(f"CHANGE-IMPACT-{mode}", RuleStatus.EVALUATED, f"Phase 4 impact mode {mode} is respected.", evidence=[{"mode": mode, "categories": sorted(categories)}])
+        return set(categories), _rule("CHANGE-IMPACT-TARGETED", RuleStatus.EVALUATED, "Only categories selected by Phase 4 are evaluated.", evidence=[{"mode": mode, "categories": sorted(categories)}]), mode
+    return None, _rule(f"CHANGE-IMPACT-{mode}", RuleStatus.EVALUATED, f"Phase 4 impact mode {mode} is respected.", evidence=[{"mode": mode, "categories": sorted(categories)}]), mode
 
 
 def evaluate_policy(
@@ -67,13 +67,15 @@ def evaluate_policy(
     policy = policy or load_policy(policy_path)
     rules: list[RuleEvaluation] = []
     errors: list[str] = []
-    active_categories, impact_rule = _active_categories(impact_report, policy)
+    active_categories, impact_rule, impact_mode = _active_categories(impact_report, policy)
     rules.append(impact_rule)
     if impact_rule.status == RuleStatus.ERROR:
         errors.append(impact_rule.reason)
 
     results: list[dict[str, Any]] = []
-    if security_report is None:
+    if security_report is None and impact_mode == "NONE":
+        results = []
+    elif security_report is None:
         if policy.rules.security_failures.enabled or policy.rules.execution_errors.enabled:
             rules.append(_rule("SECURITY-REPORT-REQUIRED", RuleStatus.ERROR, "Security report is required by enabled policy rules.", decision=Decision.ERROR))
             errors.append("Security report is required by policy.")
@@ -84,7 +86,7 @@ def evaluate_policy(
             rules.append(_rule("SECURITY-REPORT-INVALID", RuleStatus.ERROR, str(exc), decision=Decision.ERROR))
             errors.append(str(exc))
 
-    considered = [item for item in results if active_categories is None or item.get("category") in active_categories]
+    considered = [item for item in results if impact_mode != "NONE" and (active_categories is None or item.get("category") in active_categories)]
     failed = [item for item in considered if item["status"] == "SECURITY_FAIL"]
     execution_errors = [item for item in considered if item["status"] in ERROR_STATUSES]
     if policy.rules.security_failures.enabled:

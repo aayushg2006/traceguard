@@ -1,6 +1,6 @@
 # TraceGuard
 
-TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 7 — Policy-as-Code Security Gates**.
+TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 8 — Jenkins CI/CD Integration**.
 
 This phase provides a local, synthetic Enterprise Customer Support AI Agent. It combines a configurable Ollama chat model, a local ChromaDB knowledge base with Ollama embeddings, and explicitly allowlisted mock business tools. TraceGuard’s security-testing framework is intentionally not implemented yet.
 
@@ -201,7 +201,7 @@ Replay reports `REPRODUCED`, `NOT_REPRODUCED`, `REPLAY_ERROR`, or `INVALID_BUNDL
 
 ## Phase 7 policy gates
 
-The deterministic policy engine evaluates existing TraceGuard reports and returns `ALLOW`, `BLOCK`, or `ERROR`. It does not use an LLM for the final decision and does not implement CI/CD integration yet.
+The deterministic policy engine evaluates existing TraceGuard reports and returns `ALLOW`, `BLOCK`, or `ERROR`. It does not use an LLM for the final decision. Jenkins invokes this CLI in Phase 8.
 
 ```bash
 python scripts/evaluate_policy.py \
@@ -214,3 +214,7 @@ python scripts/evaluate_policy.py \
 ```
 
 Exit codes are `0` for `ALLOW`, `10` for `BLOCK`, and `20` for `ERROR`. See [docs/policy-gates.md](docs/policy-gates.md).
+
+## Phase 8 Jenkins integration
+
+`Jenkinsfile` orchestrates the existing change analysis, security tests, optional regression comparison, and policy CLI. It creates an isolated `.jenkins-venv`, validates dependencies, publishes selected sanitized reports, and fails safely for policy `BLOCK` or `ERROR` decisions. See [docs/ci-cd.md](docs/ci-cd.md) for Jenkins setup, Ollama connectivity, plugins, credentials, webhooks, and first-build behavior.

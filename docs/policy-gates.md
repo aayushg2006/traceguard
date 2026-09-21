@@ -47,7 +47,7 @@ are optional unless the policy requires them. Reports contain only references,
 summaries, and rule evidence—not environment variables or secrets.
 
 Phase 3 regression, Phase 4 impact selection, Phase 5 mutation outcomes, and
-Phase 6 replay evidence are consumed rather than reimplemented. Jenkins,
-webhooks, deployment, and other CI/CD integration are intentionally deferred to
-Phase 8. The gate is currently a local CLI and depends on the quality of its
-supplied reports.
+Phase 6 replay evidence are consumed rather than reimplemented. Jenkins and
+webhooks are orchestrated in Phase 8; deployment remains outside this phase.
+The gate remains a reusable CLI and depends on the quality of its supplied
+reports.
