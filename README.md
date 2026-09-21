@@ -1,6 +1,6 @@
 # TraceGuard
 
-TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 9 — Docker Containerization and Deployment**.
+TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 10 — UI and Security Dashboard**.
 
 This phase packages the existing local, synthetic Enterprise Customer Support AI Agent in a non-root Docker image. It combines a configurable Ollama chat model, a local ChromaDB knowledge base with Ollama embeddings, and explicitly allowlisted mock business tools. No production deployment or second Ollama container is introduced.
 
@@ -234,3 +234,31 @@ The container uses configurable `TRACEGUARD_OLLAMA_URL`, chat and embedding
 model variables, and a persistent Chroma volume. See
 [docs/docker.md](docs/docker.md) for the validated Linux setup, `/chat`
 validation, networking, and safe cleanup.
+
+## Phase 10 dashboard
+
+Phase 10 adds a React/TypeScript security console backed by sanitized FastAPI
+dashboard APIs. Build and serve it with:
+
+```bash
+cd frontend
+npm install
+npm run build
+cd ..
+uvicorn app.main:app --reload
+```
+
+Open `http://127.0.0.1:8000/`. The dashboard reads real security, regression,
+mutation, replay, policy, change-impact, failure-bundle, runtime, Jenkins, and
+Git history data. It also includes an Agent Chat page backed by the real
+`POST /chat` endpoint. If a report or live Jenkins integration is unavailable,
+the UI says so explicitly.
+
+For live Jenkins status, export `TRACEGUARD_JENKINS_URL`,
+`TRACEGUARD_JENKINS_JOB`, `TRACEGUARD_JENKINS_USER`, and
+`TRACEGUARD_JENKINS_TOKEN` before starting FastAPI. Keep the API token outside
+the repository. Jenkins builds the Docker deployment only when policy returns
+`ALLOW`; `BLOCK` and `ERROR` stop the deployment and fail the build.
+
+See [docs/dashboard.md](docs/dashboard.md) for the API mapping, security
+model, Jenkins setup, testing, and limitations.

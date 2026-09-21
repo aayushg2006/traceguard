@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: traceguard:phase9
+    image: traceguard:phase10
     network_mode: host
     environment:
       TRACEGUARD_APP_HOST: 0.0.0.0

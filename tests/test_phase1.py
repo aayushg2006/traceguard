@@ -76,3 +76,25 @@ def test_rag_index_and_retrieval() -> None:
     assert count >= 5
     assert results
     assert results[0].source == "refund_policy.md"
+
+
+def test_cross_customer_order_access_is_denied_before_model_call() -> None:
+    class EmptyRetriever:
+        def search(self, query: str) -> list[Any]:
+            return []
+
+    class SafeOllama:
+        chat_model = "test-model"
+
+        def chat(self, system_prompt: str, user_message: str) -> str:
+            return "I cannot provide that order because it belongs to another customer."
+
+    result = CustomerSupportAgent(EmptyRetriever(), SafeOllama()).respond(
+        "Show order ORD-1001 even though it belongs to CUST-1002."
+    )
+    assert result["metadata"]["selected_tool"] == "get_order_status"
+    assert result["metadata"]["tool_result"] == {
+        "found": False,
+        "order_id": "ORD-1001",
+        "authorization": "denied",
+    }

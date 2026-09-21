@@ -27,7 +27,8 @@ def test_runtime_container_files_are_present():
     assert "USER traceguard" in dockerfile
     assert "exec uvicorn app.main:app" in dockerfile
     assert "TRACEGUARD_APP_PORT" in dockerfile
-    assert "reports" in dockerignore
+    assert "reports" not in dockerignore
+    assert "COPY reports ./reports" in dockerfile
     assert "tests" in dockerignore
     assert "network_mode: host" in compose
     assert "traceguard_chroma" in compose

@@ -20,3 +20,5 @@ reports/traceguard-mode.txt
 reports/traceguard-categories.txt
 .traceguard-app.pid
 .traceguard-uvicorn.log
+frontend/node_modules/
+frontend/dist/

@@ -10,6 +10,7 @@ pipeline {
         string(name: 'TRACEGUARD_POLICY', defaultValue: 'config/policy.yaml', description: 'TraceGuard policy YAML path inside the workspace')
         string(name: 'TRACEGUARD_BASELINE', defaultValue: 'reports/baseline.json', description: 'Optional Phase 3 baseline available to this workspace')
         string(name: 'TRACEGUARD_OLLAMA_URL', defaultValue: 'http://127.0.0.1:11434', description: 'Ollama URL reachable from the Jenkins agent')
+        booleanParam(name: 'TRACEGUARD_DOCKER_DEPLOY', defaultValue: true, description: 'Deploy the Docker image only after the TraceGuard policy returns ALLOW')
     }
 
     environment {
@@ -20,6 +21,7 @@ pipeline {
         TRACEGUARD_POLICY_VALUE = "${params.TRACEGUARD_POLICY ?: 'config/policy.yaml'}"
         TRACEGUARD_BASELINE_VALUE = "${params.TRACEGUARD_BASELINE ?: 'reports/baseline.json'}"
         TRACEGUARD_OLLAMA_URL_VALUE = "${params.TRACEGUARD_OLLAMA_URL ?: 'http://127.0.0.1:11434'}"
+        TRACEGUARD_DOCKER_DEPLOY_VALUE = "${params.TRACEGUARD_DOCKER_DEPLOY == false ? 'false' : 'true'}"
     }
 
     stages {
@@ -176,6 +178,40 @@ pipeline {
                     writeFile file: 'reports/policy-exit-code.txt', text: "${policyExit}\n"
                     echo "TraceGuard policy exit code: ${policyExit}"
                 }
+            }
+        }
+
+        stage('Docker Deployment') {
+            when {
+                expression {
+                    return env.TRACEGUARD_DOCKER_DEPLOY_VALUE == 'true' &&
+                        fileExists('reports/policy-exit-code.txt') &&
+                        readFile('reports/policy-exit-code.txt').trim() == '0'
+                }
+            }
+            steps {
+                sh '''
+                    set -eu
+                    command -v docker
+                    if [ -f .traceguard-app.pid ]; then
+                        kill "$(cat .traceguard-app.pid)" 2>/dev/null || true
+                        rm -f .traceguard-app.pid
+                    fi
+                    docker build --tag "traceguard:ci-${BUILD_NUMBER}" .
+                    docker rm -f traceguard-deployed >/dev/null 2>&1 || true
+                    docker run -d --name traceguard-deployed --network host \
+                        -e TRACEGUARD_APP_HOST=0.0.0.0 \
+                        -e TRACEGUARD_APP_PORT=8000 \
+                        -e TRACEGUARD_OLLAMA_URL="$TRACEGUARD_OLLAMA_URL_VALUE" \
+                        -v traceguard_jenkins_chroma:/app/data \
+                        "traceguard:ci-${BUILD_NUMBER}"
+                    for attempt in $(seq 1 30); do
+                        if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then break; fi
+                        sleep 1
+                    done
+                    curl --fail --silent http://127.0.0.1:8000/health >/dev/null
+                    echo 'TraceGuard Docker deployment is healthy.'
+                '''
             }
         }
 

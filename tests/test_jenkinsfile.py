@@ -24,6 +24,8 @@ def test_jenkinsfile_orchestrates_existing_traceguard_clis():
 def test_jenkinsfile_does_not_duplicate_policy_or_deployment_logic():
     text = JENKINSFILE.read_text(encoding="utf-8")
     assert "security_score" not in text
-    assert "docker build" not in text
+    assert "docker build --tag" in text
+    assert "TRACEGUARD_DOCKER_DEPLOY_VALUE" in text
+    assert "readFile('reports/policy-exit-code.txt').trim() == '0'" in text
     assert "kubectl" not in text
     assert "credentials(" not in text

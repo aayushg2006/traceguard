@@ -61,7 +61,7 @@ test runner can target a running container using its existing target URL
 configuration; it continues to exercise the same application behavior,
 including the known synthetic `TA-003` cross-customer security failure.
 
-The image runs as the non-root `traceguard` user, contains only runtime app,
-configuration, and RAG document files, and receives no secrets. Reports,
-tests, docs, Git metadata, virtual environments, and local IDE files are
-excluded by `.dockerignore`.
+The image runs as the non-root `traceguard` user and receives no secrets.
+Reviewed synthetic reports are included when present so the Phase 10 dashboard
+can render real evidence. Tests, docs, Git metadata, virtual environments,
+local IDE files, and Chroma build data are excluded by `.dockerignore`.

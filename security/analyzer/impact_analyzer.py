@@ -12,6 +12,8 @@ def classify_path(path: str) -> str:
     normalized = path.replace("\\", "/")
     if normalized == "app/agent/prompts.py":
         return "system_prompt"
+    if normalized == "app/agent/agent.py":
+        return "agent_orchestration"
     if normalized.startswith("app/agent/"):
         return "agent_logic"
     if normalized.startswith("app/rag/documents/"):
@@ -57,6 +59,7 @@ def impacts_for_component(component: str) -> tuple[str, ...]:
     mapping = {
         "system_prompt": ("prompt_injection", "data_leakage"),
         "agent_logic": ("prompt_injection", "data_leakage"),
+        "agent_orchestration": ("data_leakage", "prompt_injection", "tool_abuse"),
         "rag_knowledge": ("rag_injection", "data_leakage"),
         "rag": ("rag_injection", "data_leakage"),
         "tools": ("tool_abuse", "data_leakage"),
