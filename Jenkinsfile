@@ -20,9 +20,9 @@ pipeline {
         TRACEGUARD_POLICY_VALUE = "${params.TRACEGUARD_POLICY ?: 'config/policy.yaml'}"
         TRACEGUARD_BASELINE_VALUE = "${params.TRACEGUARD_BASELINE ?: 'reports/baseline.json'}"
         TRACEGUARD_OLLAMA_URL_VALUE = "${params.TRACEGUARD_OLLAMA_URL ?: 'http://127.0.0.1:11434'}"
-        TRACEGUARD_MODE = ''
-        TRACEGUARD_CATEGORIES = ''
-        TRACEGUARD_POLICY_EXIT = ''
+        TRACEGUARD_MODE = 'FULL'
+        TRACEGUARD_CATEGORIES = 'NONE'
+        TRACEGUARD_POLICY_EXIT = '20'
     }
 
     stages {
@@ -77,18 +77,23 @@ pipeline {
         stage('Change Analysis') {
             steps {
                 script {
-                    def mode = sh(returnStdout: true, script: '''
+                    sh '''
                         set -eu
                         current=$(git rev-parse HEAD)
                         base=$(git rev-parse HEAD^1 2>/dev/null || true)
                         if [ -n "$base" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
                             "$TRACEGUARD_PYTHON" scripts/analyze_changes.py --base "$base" --current "$current" --output reports/change-impact.json
-                            "$TRACEGUARD_PYTHON" -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["selection"]["mode"])' reports/change-impact.json
                         else
                             echo "No valid parent commit; first-build behavior requires a FULL security scan."
+                        fi
+                    '''
+                    def mode = sh(returnStdout: true, script: '''
+                        if [ -f reports/change-impact.json ]; then
+                            "$TRACEGUARD_PYTHON" -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["selection"]["mode"])' reports/change-impact.json
+                        else
                             echo FULL
                         fi
-                    ''').trim().split('\n').last()
+                    ''').trim()
                     env.TRACEGUARD_MODE = mode
                     if (mode == 'TARGETED') {
                         env.TRACEGUARD_CATEGORIES = sh(returnStdout: true, script: '''
