@@ -142,3 +142,22 @@ python scripts/compare_regression.py \
 ```
 
 The comparison reports `IMPROVED`, `UNCHANGED`, `REGRESSION`, or `ERROR`, plus category deltas, newly failed/recovered tests, and execution errors. See [docs/regression.md](docs/regression.md). Change-aware test selection is not implemented yet.
+
+## Phase 4 change-aware test selection
+
+Phase 4 analyzes Git changes and selects relevant existing security-test categories without using an LLM. Unknown or ambiguous changes fail safe to a full security scan.
+
+```bash
+python scripts/analyze_changes.py \
+  --base BASE_SHA \
+  --current CURRENT_SHA \
+  --output reports/change-impact.json
+```
+
+The result can select `NONE`, `TARGETED`, or `FULL`. Targeted categories can be passed to the existing security runner:
+
+```bash
+python scripts/run_security_tests.py --categories prompt_injection,data_leakage
+```
+
+See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration. Mutation testing, failure replay, policy gates, Jenkins, Docker deployment, and dashboards remain unimplemented.
