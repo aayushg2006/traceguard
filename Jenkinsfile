@@ -15,6 +15,11 @@ pipeline {
     environment {
         TRACEGUARD_VENV = "${WORKSPACE}/.jenkins-venv"
         TRACEGUARD_PYTHON = "${WORKSPACE}/.jenkins-venv/bin/python"
+        // The first SCM-discovered build may run before parameters are injected.
+        // Keep explicit defaults so set -u cannot fail before the parameters exist.
+        TRACEGUARD_POLICY_VALUE = "${params.TRACEGUARD_POLICY ?: 'config/policy.yaml'}"
+        TRACEGUARD_BASELINE_VALUE = "${params.TRACEGUARD_BASELINE ?: 'reports/baseline.json'}"
+        TRACEGUARD_OLLAMA_URL_VALUE = "${params.TRACEGUARD_OLLAMA_URL ?: 'http://127.0.0.1:11434'}"
         TRACEGUARD_MODE = ''
         TRACEGUARD_CATEGORIES = ''
         TRACEGUARD_POLICY_EXIT = ''
@@ -43,7 +48,7 @@ pipeline {
                     command -v git
                     git --version
                     command -v curl
-                    curl --fail --silent --show-error "$TRACEGUARD_OLLAMA_URL/api/tags" >/dev/null
+                    curl --fail --silent --show-error "$TRACEGUARD_OLLAMA_URL_VALUE/api/tags" >/dev/null
                 '''
             }
         }
@@ -127,11 +132,11 @@ pipeline {
         stage('Regression Evaluation') {
             steps {
                 script {
-                    if (env.TRACEGUARD_MODE == 'FULL' && fileExists(params.TRACEGUARD_BASELINE)) {
+                    if (env.TRACEGUARD_MODE == 'FULL' && fileExists(env.TRACEGUARD_BASELINE_VALUE)) {
                         sh '''
                             set -eu
                             "$TRACEGUARD_PYTHON" scripts/compare_regression.py \
-                                --baseline "$TRACEGUARD_BASELINE" \
+                                --baseline "$TRACEGUARD_BASELINE_VALUE" \
                                 --current reports/security-report.json \
                                 --output reports/regression-report.json
                         '''
@@ -149,7 +154,7 @@ pipeline {
                 script {
                     env.TRACEGUARD_POLICY_EXIT = sh(returnStatus: true, script: '''
                         set +e
-                        set -- --policy "$TRACEGUARD_POLICY" --output reports/policy-result.json
+                        set -- --policy "$TRACEGUARD_POLICY_VALUE" --output reports/policy-result.json
                         if [ "$TRACEGUARD_MODE" = "NONE" ]; then
                             set -- "$@" --impact-report reports/change-impact.json
                         else
