@@ -14,6 +14,8 @@ def test_jenkinsfile_orchestrates_existing_traceguard_clis():
     ):
         assert command in text
     assert "reports/policy-exit-code.txt" in text
+    assert "reports/traceguard-mode.txt" in text
+    assert "reports/traceguard-categories.txt" in text
     assert "writeFile" in text
     assert "readFile('reports/policy-exit-code.txt')" in text
     assert "--junitxml=reports/pytest.xml" in text
