@@ -1,0 +1,25 @@
+services:
+  traceguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: traceguard:phase9
+    network_mode: host
+    environment:
+      TRACEGUARD_APP_HOST: 0.0.0.0
+      TRACEGUARD_APP_PORT: 8000
+      TRACEGUARD_OLLAMA_URL: ${TRACEGUARD_OLLAMA_URL:-http://127.0.0.1:11434}
+      TRACEGUARD_CHAT_MODEL: ${TRACEGUARD_CHAT_MODEL:-qwen2.5-coder:3b}
+      TRACEGUARD_EMBEDDING_MODEL: ${TRACEGUARD_EMBEDDING_MODEL:-nomic-embed-text}
+      TRACEGUARD_CHROMA_DIR: /app/data/chroma
+    volumes:
+      - traceguard_chroma:/app/data/chroma
+    healthcheck:
+      test: [CMD-SHELL, "python -c \"import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.environ.get('TRACEGUARD_APP_PORT', '8000') + '/health', timeout=3)\""]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  traceguard_chroma:

@@ -1,8 +1,8 @@
 # TraceGuard
 
-TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 8 — Jenkins CI/CD Integration**.
+TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 9 — Docker Containerization and Deployment**.
 
-This phase provides a local, synthetic Enterprise Customer Support AI Agent. It combines a configurable Ollama chat model, a local ChromaDB knowledge base with Ollama embeddings, and explicitly allowlisted mock business tools. TraceGuard’s security-testing framework is intentionally not implemented yet.
+This phase packages the existing local, synthetic Enterprise Customer Support AI Agent in a non-root Docker image. It combines a configurable Ollama chat model, a local ChromaDB knowledge base with Ollama embeddings, and explicitly allowlisted mock business tools. No production deployment or second Ollama container is introduced.
 
 ## Prerequisites
 
@@ -160,7 +160,7 @@ The result can select `NONE`, `TARGETED`, or `FULL`. Targeted categories can be 
 python scripts/run_security_tests.py --categories prompt_injection,data_leakage
 ```
 
-See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration. Jenkins, Docker deployment, and dashboards remain deferred to later phases.
+See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration.
 
 ## Phase 5 mutation testing
 
@@ -218,3 +218,19 @@ Exit codes are `0` for `ALLOW`, `10` for `BLOCK`, and `20` for `ERROR`. See [doc
 ## Phase 8 Jenkins integration
 
 `Jenkinsfile` orchestrates the existing change analysis, security tests, optional regression comparison, and policy CLI. It creates an isolated `.jenkins-venv`, validates dependencies, publishes selected sanitized reports, and fails safely for policy `BLOCK` or `ERROR` decisions. See [docs/ci-cd.md](docs/ci-cd.md) for Jenkins setup, Ollama connectivity, plugins, credentials, webhooks, and first-build behavior.
+
+## Phase 9 Docker deployment
+
+Build and run the existing FastAPI application in Docker:
+
+```bash
+docker compose build
+docker compose up -d
+curl http://127.0.0.1:8000/health
+docker compose down
+```
+
+The container uses configurable `TRACEGUARD_OLLAMA_URL`, chat and embedding
+model variables, and a persistent Chroma volume. See
+[docs/docker.md](docs/docker.md) for the validated Linux setup, `/chat`
+validation, networking, and safe cleanup.
