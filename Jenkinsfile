@@ -22,7 +22,6 @@ pipeline {
         TRACEGUARD_OLLAMA_URL_VALUE = "${params.TRACEGUARD_OLLAMA_URL ?: 'http://127.0.0.1:11434'}"
         TRACEGUARD_MODE = 'FULL'
         TRACEGUARD_CATEGORIES = 'NONE'
-        TRACEGUARD_POLICY_EXIT = '20'
     }
 
     stages {
@@ -95,10 +94,10 @@ pipeline {
                         fi
                     ''').trim()
                     env.TRACEGUARD_MODE = mode
-                    if (mode == 'TARGETED') {
+                    if (fileExists('reports/change-impact.json')) {
                         env.TRACEGUARD_CATEGORIES = sh(returnStdout: true, script: '''
                             "$TRACEGUARD_PYTHON" -c 'import json,sys; print(",".join(json.load(open(sys.argv[1], encoding="utf-8"))["selection"]["tests"]))' reports/change-impact.json
-                        ''').trim()
+                        ''').trim() ?: 'NONE'
                     }
                     echo "TraceGuard selection mode: ${env.TRACEGUARD_MODE}"
                     echo "TraceGuard selected categories: ${env.TRACEGUARD_CATEGORIES ?: 'none'}"
@@ -157,7 +156,7 @@ pipeline {
         stage('Policy Evaluation') {
             steps {
                 script {
-                    env.TRACEGUARD_POLICY_EXIT = sh(returnStatus: true, script: '''
+                    def policyExit = sh(returnStatus: true, script: '''
                         set +e
                         set -- --policy "$TRACEGUARD_POLICY_VALUE" --output reports/policy-result.json
                         if [ "$TRACEGUARD_MODE" = "NONE" ]; then
@@ -173,8 +172,9 @@ pipeline {
                         status=$?
                         echo "TraceGuard policy exit code: $status"
                         exit "$status"
-                    ''').toString()
-                    echo "TraceGuard policy exit code: ${env.TRACEGUARD_POLICY_EXIT}"
+                    ''')
+                    writeFile file: 'reports/policy-exit-code.txt', text: "${policyExit}\n"
+                    echo "TraceGuard policy exit code: ${policyExit}"
                 }
             }
         }
@@ -189,9 +189,10 @@ pipeline {
         stage('Final Security Decision') {
             steps {
                 script {
-                    if (env.TRACEGUARD_POLICY_EXIT == '0') {
+                    def policyExit = readFile('reports/policy-exit-code.txt').trim()
+                    if (policyExit == '0') {
                         echo 'TraceGuard policy decision: ALLOW. Pipeline may continue.'
-                    } else if (env.TRACEGUARD_POLICY_EXIT == '10') {
+                    } else if (policyExit == '10') {
                         error('TraceGuard policy decision: BLOCK. Build stopped by security policy.')
                     } else {
                         error('TraceGuard policy decision: ERROR. Security verification did not complete safely.')

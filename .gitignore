@@ -15,5 +15,6 @@ reports/failures/
 reports/replay-report.json
 reports/policy-result.json
 reports/pytest.xml
+reports/policy-exit-code.txt
 .traceguard-app.pid
 .traceguard-uvicorn.log
