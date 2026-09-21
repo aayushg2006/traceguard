@@ -6,3 +6,5 @@ __pycache__/
 .env
 data/chroma/
 reports/security-report.json
+reports/baseline.json
+reports/regression-report.json

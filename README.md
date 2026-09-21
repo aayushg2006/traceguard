@@ -118,4 +118,27 @@ The command writes a machine-readable report to `reports/security-report.json`. 
 python scripts/run_security_tests.py --category prompt_injection
 ```
 
-See [docs/security-tests.md](docs/security-tests.md) for the result schema, architecture, scoring, and limitations. Baselines, change-aware selection, regression comparison, mutation testing, policy gates, and CI/CD integration are not implemented yet.
+See [docs/security-tests.md](docs/security-tests.md) for the result schema, architecture, scoring, and limitations. Change-aware selection, mutation testing, policy gates, and CI/CD integration are not implemented yet.
+
+## Phase 3 baselines and regression comparison
+
+Phase 3 creates reproducible baselines from Phase 2 reports and compares current reports using deterministic overall and category score deltas. The configured threshold is `regression.max_score_drop` in `config/security.yaml`; the default is 5 points, and an exact five-point drop does not exceed the threshold.
+
+Create a baseline:
+
+```bash
+python scripts/create_baseline.py \
+  --report reports/security-report.json \
+  --output reports/baseline.json
+```
+
+Compare reports:
+
+```bash
+python scripts/compare_regression.py \
+  --baseline reports/baseline.json \
+  --current reports/security-report.json \
+  --output reports/regression-report.json
+```
+
+The comparison reports `IMPROVED`, `UNCHANGED`, `REGRESSION`, or `ERROR`, plus category deltas, newly failed/recovered tests, and execution errors. See [docs/regression.md](docs/regression.md). Change-aware test selection is not implemented yet.

@@ -1,2 +1,2 @@
-# Security-test configuration is introduced in later phases.
-{}
+regression:
+  max_score_drop: 5
