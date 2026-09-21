@@ -12,3 +12,4 @@ reports/change-impact.json
 reports/mutation-report.json
 reports/failures/
 reports/replay-report.json
+reports/policy-result.json

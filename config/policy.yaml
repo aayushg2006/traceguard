@@ -1,0 +1,36 @@
+policy_version: "1"
+
+# The regression threshold matches config/security.yaml. Phase 3 remains the
+# source of the calculated regression result; this value is only used when a
+# report exposes the comparison fields directly.
+regression:
+  max_score_drop: 5.0
+  decision: BLOCK
+
+rules:
+  security_failures:
+    enabled: true
+    decision: BLOCK
+  execution_errors:
+    enabled: true
+    decision: ERROR
+  newly_failed_tests:
+    enabled: true
+    decision: BLOCK
+  category_regression:
+    enabled: true
+    decision: BLOCK
+  mutation:
+    enabled: true
+    require_zero_survivors: false
+    on_error: ERROR
+  replay:
+    enabled: true
+    require_for_security_failures: false
+    on_error: ERROR
+    on_missing: ERROR
+    on_not_reproduced: ERROR
+    on_invalid: ERROR
+  change_impact:
+    enabled: true
+    require_report: false

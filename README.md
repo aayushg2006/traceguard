@@ -1,6 +1,6 @@
 # TraceGuard
 
-TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 1 — Target AI Application MVP**.
+TraceGuard is a change-aware security regression and CI/CD gating project for AI applications. The repository is currently at **Phase 7 — Policy-as-Code Security Gates**.
 
 This phase provides a local, synthetic Enterprise Customer Support AI Agent. It combines a configurable Ollama chat model, a local ChromaDB knowledge base with Ollama embeddings, and explicitly allowlisted mock business tools. TraceGuard’s security-testing framework is intentionally not implemented yet.
 
@@ -118,7 +118,7 @@ The command writes a machine-readable report to `reports/security-report.json`. 
 python scripts/run_security_tests.py --category prompt_injection
 ```
 
-See [docs/security-tests.md](docs/security-tests.md) for the result schema, architecture, scoring, and limitations. Policy gates and CI/CD integration are not implemented yet.
+See [docs/security-tests.md](docs/security-tests.md) for the result schema, architecture, scoring, and limitations. The local policy gate is implemented in Phase 7; CI/CD integration remains deferred.
 
 ## Phase 3 baselines and regression comparison
 
@@ -141,7 +141,7 @@ python scripts/compare_regression.py \
   --output reports/regression-report.json
 ```
 
-The comparison reports `IMPROVED`, `UNCHANGED`, `REGRESSION`, or `ERROR`, plus category deltas, newly failed/recovered tests, and execution errors. See [docs/regression.md](docs/regression.md). Change-aware test selection is not implemented yet.
+The comparison reports `IMPROVED`, `UNCHANGED`, `REGRESSION`, or `ERROR`, plus category deltas, newly failed/recovered tests, and execution errors. See [docs/regression.md](docs/regression.md).
 
 ## Phase 4 change-aware test selection
 
@@ -160,7 +160,7 @@ The result can select `NONE`, `TARGETED`, or `FULL`. Targeted categories can be 
 python scripts/run_security_tests.py --categories prompt_injection,data_leakage
 ```
 
-See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration. Policy gates, Jenkins, Docker deployment, and dashboards remain unimplemented.
+See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration. Jenkins, Docker deployment, and dashboards remain deferred to later phases.
 
 ## Phase 5 mutation testing
 
@@ -198,3 +198,19 @@ python scripts/replay_failure.py \
 ```
 
 Replay reports `REPRODUCED`, `NOT_REPRODUCED`, `REPLAY_ERROR`, or `INVALID_BUNDLE`. Bundles redact secret-like metadata and never serialize the environment or execute bundle contents. See [docs/replay.md](docs/replay.md).
+
+## Phase 7 policy gates
+
+The deterministic policy engine evaluates existing TraceGuard reports and returns `ALLOW`, `BLOCK`, or `ERROR`. It does not use an LLM for the final decision and does not implement CI/CD integration yet.
+
+```bash
+python scripts/evaluate_policy.py \
+  --security-report reports/security-report.json \
+  --regression-report reports/regression-report.json \
+  --mutation-report reports/mutation-report.json \
+  --replay-report reports/replay-report.json \
+  --policy config/policy.yaml \
+  --output reports/policy-result.json
+```
+
+Exit codes are `0` for `ALLOW`, `10` for `BLOCK`, and `20` for `ERROR`. See [docs/policy-gates.md](docs/policy-gates.md).
