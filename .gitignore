@@ -9,3 +9,4 @@ reports/security-report.json
 reports/baseline.json
 reports/regression-report.json
 reports/change-impact.json
+reports/mutation-report.json

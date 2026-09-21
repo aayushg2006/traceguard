@@ -118,7 +118,7 @@ The command writes a machine-readable report to `reports/security-report.json`. 
 python scripts/run_security_tests.py --category prompt_injection
 ```
 
-See [docs/security-tests.md](docs/security-tests.md) for the result schema, architecture, scoring, and limitations. Change-aware selection, mutation testing, policy gates, and CI/CD integration are not implemented yet.
+See [docs/security-tests.md](docs/security-tests.md) for the result schema, architecture, scoring, and limitations. Policy gates and CI/CD integration are not implemented yet.
 
 ## Phase 3 baselines and regression comparison
 
@@ -160,4 +160,22 @@ The result can select `NONE`, `TARGETED`, or `FULL`. Targeted categories can be 
 python scripts/run_security_tests.py --categories prompt_injection,data_leakage
 ```
 
-See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration. Mutation testing, failure replay, policy gates, Jenkins, Docker deployment, and dashboards remain unimplemented.
+See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration. Failure replay, policy gates, Jenkins, Docker deployment, and dashboards remain unimplemented.
+
+## Phase 5 mutation testing
+
+Phase 5 injects controlled security weaknesses into disposable copies of the target application and reuses the existing Phase 2 security runner to measure whether those weaknesses are detected.
+
+List mutations:
+
+```bash
+python scripts/run_mutation_tests.py --list
+```
+
+Run the isolated mutation suite:
+
+```bash
+python scripts/run_mutation_tests.py --verbose
+```
+
+The default report is `reports/mutation-report.json`. Mutation execution is isolated and cleaned up after every mutation. The current Phase 1 application has no distinct output-security validation layer, so that mutation is reported as configuration-limited rather than invented. See [docs/mutation-testing.md](docs/mutation-testing.md).
