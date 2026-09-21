@@ -10,3 +10,5 @@ reports/baseline.json
 reports/regression-report.json
 reports/change-impact.json
 reports/mutation-report.json
+reports/failures/
+reports/replay-report.json

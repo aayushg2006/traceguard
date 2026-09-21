@@ -7,6 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from security.runner.security_runner import SecurityRunner, discover_tests, write_report
+from security.replay.bundle_store import save_bundle
+from security.replay.failure_bundle import bundle_from_report_result
 from security.target import ApiTargetApplication
 
 
@@ -16,6 +18,7 @@ def main() -> int:
     parser.add_argument("--categories", help="Comma-separated security-test categories")
     parser.add_argument("--target", default="http://127.0.0.1:8000")
     parser.add_argument("--output", default="reports/security-report.json")
+    parser.add_argument("--failures-dir", help="Create bundles for SECURITY_FAIL results under this directory")
     args = parser.parse_args()
 
     target = ApiTargetApplication(args.target)
@@ -37,10 +40,17 @@ def main() -> int:
     report["execution"]["selection_mode"] = "TARGETED" if categories or args.category else "FULL"
     report["execution"]["selected_categories"] = sorted({test.category for test in selected})
     output = write_report(report, args.output)
+    bundles = []
+    if args.failures_dir:
+        for result in report["results"]:
+            if result.get("status") == "SECURITY_FAIL":
+                bundles.append(save_bundle(bundle_from_report_result(result, report, target_url=args.target), args.failures_dir))
     scores = report["scores"]
     print(f"Security tests: {scores['overall']['passed']}/{scores['overall']['total']} passed")
     print(f"Overall score: {scores['overall']['score']:.2f}")
     print(f"Report: {output}")
+    if bundles:
+        print(f"Failure bundles: {len(bundles)}")
     return 0
 
 

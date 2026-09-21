@@ -63,4 +63,4 @@ The report contains total, injected, detected, survived, mutation-error, test-er
 
 The validated local run executed all four registry entries against isolated application copies. It detected the RAG boundary mutation, while the prompt and tool mutations survived. The output-validation entry was configuration-limited. The existing Phase 2 `TA-003` failure remained a pre-existing failure and was not changed or counted as a newly detected tool mutation.
 
-Mutation testing uses the configured local Ollama runtime and therefore requires Ollama and both Phase 1 models. It does not implement failure bundles, replay, policy gates, Jenkins, Docker deployment, or a dashboard.
+Mutation testing uses the configured local Ollama runtime and therefore requires Ollama and both Phase 1 models. It does not implement policy gates, Jenkins, Docker deployment, or a dashboard. Failure bundles and replay are implemented in Phase 6.

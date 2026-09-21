@@ -160,7 +160,7 @@ The result can select `NONE`, `TARGETED`, or `FULL`. Targeted categories can be 
 python scripts/run_security_tests.py --categories prompt_injection,data_leakage
 ```
 
-See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration. Failure replay, policy gates, Jenkins, Docker deployment, and dashboards remain unimplemented.
+See [docs/change-impact.md](docs/change-impact.md) for mappings, fallback behavior, renames/deletions, and Phase 2/3 integration. Policy gates, Jenkins, Docker deployment, and dashboards remain unimplemented.
 
 ## Phase 5 mutation testing
 
@@ -179,3 +179,22 @@ python scripts/run_mutation_tests.py --verbose
 ```
 
 The default report is `reports/mutation-report.json`. Mutation execution is isolated and cleaned up after every mutation. The current Phase 1 application has no distinct output-security validation layer, so that mutation is reported as configuration-limited rather than invented. See [docs/mutation-testing.md](docs/mutation-testing.md).
+
+## Phase 6 failure bundles and replay
+
+Security failures can be captured as sanitized local bundles and replayed through the existing security-test engine:
+
+```bash
+python scripts/create_failure_bundle.py \
+  --report reports/security-report.json \
+  --test-id TA-003 \
+  --output-root reports/failures
+```
+
+```bash
+python scripts/replay_failure.py \
+  --bundle reports/failures/<bundle-id>/bundle.json \
+  --output reports/replay-report.json
+```
+
+Replay reports `REPRODUCED`, `NOT_REPRODUCED`, `REPLAY_ERROR`, or `INVALID_BUNDLE`. Bundles redact secret-like metadata and never serialize the environment or execute bundle contents. See [docs/replay.md](docs/replay.md).

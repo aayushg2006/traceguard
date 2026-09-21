@@ -1,6 +1,6 @@
 # Phase 2 Security Test Engine
 
-Phase 2 provides the foundational TraceGuard security-test engine for the Phase 1 customer-support application. It does not yet implement baselines, change-aware selection, regression comparison, mutation testing, policy gates, or CI/CD integration.
+Phase 2 provides the foundational TraceGuard security-test engine for the Phase 1 customer-support application. Later phases add baseline comparison, change-aware selection, mutation testing, and failure replay; policy gates and CI/CD integration remain future work.
 
 ## Architecture
 
