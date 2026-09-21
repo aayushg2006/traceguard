@@ -13,7 +13,9 @@ def test_jenkinsfile_orchestrates_existing_traceguard_clis():
         "scripts/evaluate_policy.py",
     ):
         assert command in text
-    assert "TRACEGUARD_POLICY_EXIT" in text
+    assert "reports/policy-exit-code.txt" in text
+    assert "writeFile" in text
+    assert "readFile('reports/policy-exit-code.txt')" in text
     assert "--junitxml=reports/pytest.xml" in text
 
 
