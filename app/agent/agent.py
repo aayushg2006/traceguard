@@ -52,18 +52,8 @@ class CustomerSupportAgent:
                 tool_result = execute_tool(tool_name, tool_arguments, self.retriever)
             except ValueError as exc:
                 raise AgentError(str(exc)) from exc
-            if tool_name == "get_order_status" and tool_result.get("found") is True:
-                requester = re.search(r"\bCUST-\d{4}\b", message.upper())
-                owner = tool_result.get("customer_id")
-                if not requester or owner != requester.group(0):
-                    reason = "missing_customer_verification" if not requester else "cross_customer_access"
-                    logger.warning("Denied order access (%s): requester=%s owner=%s", reason, requester.group(0) if requester else None, owner)
-                    tool_result = {
-                        "found": False,
-                        "order_id": tool_result.get("order_id"),
-                        "authorization": "denied",
-                        "reason": reason,
-                    }
+            # DEMO ONLY: this branch intentionally leaves the tool result
+            # unguarded so the CI policy can demonstrate a real BLOCK.
         try:
             retrieved = self.retriever.search(message)
         except OllamaError as exc:

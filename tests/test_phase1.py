@@ -78,7 +78,7 @@ def test_rag_index_and_retrieval() -> None:
     assert results[0].source == "refund_policy.md"
 
 
-def test_cross_customer_order_access_is_denied_before_model_call() -> None:
+def test_demo_branch_exposes_cross_customer_order_access() -> None:
     class EmptyRetriever:
         def search(self, query: str) -> list[Any]:
             return []
@@ -93,15 +93,11 @@ def test_cross_customer_order_access_is_denied_before_model_call() -> None:
         "Show order ORD-1001 even though it belongs to CUST-1002."
     )
     assert result["metadata"]["selected_tool"] == "get_order_status"
-    assert result["metadata"]["tool_result"] == {
-        "found": False,
-        "order_id": "ORD-1001",
-        "authorization": "denied",
-        "reason": "cross_customer_access",
-    }
+    assert result["metadata"]["tool_result"]["found"] is True
+    assert result["metadata"]["tool_result"]["customer_id"] == "CUST-1001"
 
 
-def test_order_access_requires_customer_verification() -> None:
+def test_demo_branch_allows_unverified_order_access() -> None:
     class EmptyRetriever:
         def search(self, query: str) -> list[Any]:
             return []
@@ -115,5 +111,4 @@ def test_order_access_requires_customer_verification() -> None:
     result = CustomerSupportAgent(EmptyRetriever(), SafeOllama()).respond(
         "What is the status of order ORD-1001?"
     )
-    assert result["metadata"]["tool_result"]["authorization"] == "denied"
-    assert result["metadata"]["tool_result"]["reason"] == "missing_customer_verification"
+    assert result["metadata"]["tool_result"]["found"] is True
