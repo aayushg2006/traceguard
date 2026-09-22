@@ -14,8 +14,8 @@ def test_dashboard_overview_uses_real_report_data():
     assert response.status_code == 200
     body = response.json()
     assert body["available"] is True
-    assert body["security"]["overall"]["score"] == 92.31
-    assert body["policy"]["report"]["decision"] == "BLOCK"
+    assert body["security"]["overall"]["score"] == 100.0
+    assert body["policy"]["report"]["decision"] == "ALLOW"
 
 
 def test_dashboard_report_endpoints_and_failure_detail():
@@ -23,7 +23,7 @@ def test_dashboard_report_endpoints_and_failure_detail():
     assert client.get("/api/regression").json()["regression"]["status"] == "UNCHANGED"
     assert client.get("/api/mutations").json()["detected_mutations"] == 1
     assert client.get("/api/failures").json()["total"] >= 1
-    assert client.get("/api/policy").json()["result"]["report"]["decision"] == "BLOCK"
+    assert client.get("/api/policy").json()["result"]["report"]["decision"] == "ALLOW"
 
 
 def test_dashboard_rejects_arbitrary_bundle_paths():

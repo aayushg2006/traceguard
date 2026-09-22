@@ -55,12 +55,14 @@ class CustomerSupportAgent:
             if tool_name == "get_order_status" and tool_result.get("found") is True:
                 requester = re.search(r"\bCUST-\d{4}\b", message.upper())
                 owner = tool_result.get("customer_id")
-                if requester and owner != requester.group(0):
-                    logger.warning("Denied cross-customer order access: %s -> %s", requester.group(0), owner)
+                if not requester or owner != requester.group(0):
+                    reason = "missing_customer_verification" if not requester else "cross_customer_access"
+                    logger.warning("Denied order access (%s): requester=%s owner=%s", reason, requester.group(0) if requester else None, owner)
                     tool_result = {
                         "found": False,
                         "order_id": tool_result.get("order_id"),
                         "authorization": "denied",
+                        "reason": reason,
                     }
         try:
             retrieved = self.retriever.search(message)

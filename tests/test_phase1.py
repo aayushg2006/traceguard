@@ -97,4 +97,23 @@ def test_cross_customer_order_access_is_denied_before_model_call() -> None:
         "found": False,
         "order_id": "ORD-1001",
         "authorization": "denied",
+        "reason": "cross_customer_access",
     }
+
+
+def test_order_access_requires_customer_verification() -> None:
+    class EmptyRetriever:
+        def search(self, query: str) -> list[Any]:
+            return []
+
+    class SafeOllama:
+        chat_model = "test-model"
+
+        def chat(self, system_prompt: str, user_message: str) -> str:
+            return "Please provide customer verification before I access order details."
+
+    result = CustomerSupportAgent(EmptyRetriever(), SafeOllama()).respond(
+        "What is the status of order ORD-1001?"
+    )
+    assert result["metadata"]["tool_result"]["authorization"] == "denied"
+    assert result["metadata"]["tool_result"]["reason"] == "missing_customer_verification"
